@@ -1,11 +1,5 @@
 package com.codegym.udemy.dto;
 
-import com.codegym.udemy.entity.Course;
-import com.codegym.udemy.entity.Lesson;
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
