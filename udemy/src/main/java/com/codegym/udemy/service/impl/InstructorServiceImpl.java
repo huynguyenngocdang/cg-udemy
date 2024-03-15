@@ -49,11 +49,13 @@ public class InstructorServiceImpl implements InstructorService {
             instructorDto.setAppUserId(instructor.getAppUser().getId());
         }
 
-        List<Long> coursesId = instructor.getCourses().stream()
-                .map(Course::getId)
-                .collect(Collectors.toList());
+        if(instructor.getCourses() != null && !instructor.getCourses().isEmpty()) {
+            List<Long> coursesId = instructor.getCourses().stream()
+                    .map(Course::getId)
+                    .collect(Collectors.toList());
 
-        instructorDto.setCoursesId(coursesId);
+            instructorDto.setCoursesId(coursesId);
+        }
         return instructorDto;
     }
 
