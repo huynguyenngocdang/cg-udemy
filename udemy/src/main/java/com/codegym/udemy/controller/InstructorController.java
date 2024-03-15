@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -46,7 +47,8 @@ public class InstructorController {
 
     @PutMapping("/{instructorId}")
     public ResponseEntity<String> editInstructor(@PathVariable Long instructorId, @RequestBody InstructorDto instructorDto) {
-        instructorService.editInstructor(instructorId, instructorDto);
+    Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+    instructorService.editInstructor(instructorId, instructorDto);
         return ResponseEntity.ok("Instructor edited successfully.");
     }
 
