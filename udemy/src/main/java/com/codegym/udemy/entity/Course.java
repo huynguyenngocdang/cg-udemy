@@ -68,5 +68,4 @@ public class Course {
     @OneToMany(mappedBy = "course")
     private List<Review> reviews = new ArrayList<>();
 
-
 }

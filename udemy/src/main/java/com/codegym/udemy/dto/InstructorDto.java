@@ -23,6 +23,7 @@ public class InstructorDto {
     private int age;
     private String expertise;
     private String bio;
+    private String photoUrl;
     private Long appUserId;
     private List<Long> coursesId = new ArrayList<>();
 }

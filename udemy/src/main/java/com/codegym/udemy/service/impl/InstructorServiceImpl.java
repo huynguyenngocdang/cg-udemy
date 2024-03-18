@@ -7,10 +7,13 @@ import com.codegym.udemy.entity.Instructor;
 import com.codegym.udemy.repository.AppUserRepository;
 import com.codegym.udemy.repository.CourseRepository;
 import com.codegym.udemy.repository.InstructorRepository;
+import com.codegym.udemy.service.FirebaseStorageService;
 import com.codegym.udemy.service.InstructorService;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -21,12 +24,16 @@ public class InstructorServiceImpl implements InstructorService {
     private final CourseRepository courseRepository;
     private final AppUserRepository appUserRepository;
     private final ModelMapper modelMapper;
+    private final FirebaseStorageService firebaseStorageService;
 
-    public InstructorServiceImpl(InstructorRepository instructorRepository, CourseRepository courseRepository, AppUserRepository appUserRepository, ModelMapper modelMapper) {
+    public InstructorServiceImpl(InstructorRepository instructorRepository, CourseRepository courseRepository,
+                                 AppUserRepository appUserRepository, ModelMapper modelMapper,
+                                 FirebaseStorageService firebaseStorageService) {
         this.instructorRepository = instructorRepository;
         this.courseRepository = courseRepository;
         this.appUserRepository = appUserRepository;
         this.modelMapper = modelMapper;
+        this.firebaseStorageService = firebaseStorageService;
     }
 
     private Instructor convertToInstructor(InstructorDto instructorDto) {
@@ -60,7 +67,7 @@ public class InstructorServiceImpl implements InstructorService {
     }
 
     @Override
-    public void saveInstructor(Long appUserId, InstructorDto instructorDto) {
+    public void saveInstructor(Long appUserId, InstructorDto instructorDto, MultipartFile file) {
         // Check if there is already an Instructor associated with the provided AppUser
         Optional<Instructor> existingInstructor = instructorRepository.getInstructorByAppUser_Id(appUserId);
 
@@ -68,19 +75,35 @@ public class InstructorServiceImpl implements InstructorService {
             throw new IllegalStateException("An Instructor is already associated with the provided AppUser");
         } else {
             // If no existing Instructor is found, proceed to save the new Instructor
+            try {
+                String imageUrl = firebaseStorageService.uploadFile(file);
+                instructorDto.setPhotoUrl(imageUrl);
+            } catch (IOException e) {
+                throw new IllegalStateException("Can't upload profile picture");
+            }
             Instructor instructor = convertToInstructor(instructorDto);
             instructorRepository.save(instructor);
         }
     }
 
     @Override
-    public void editInstructor(Long instructorId, InstructorDto instructorDto) {
+    public void editInstructor(Long instructorId, InstructorDto instructorDto, MultipartFile file) {
         // Fetch the existing Instructor from the database
         Instructor existingInstructor = instructorRepository.findById(instructorId)
                 .orElseThrow(() -> new IllegalArgumentException("Instructor not found with ID: " + instructorId));
 
         // Update fields of the existing Instructor with data from InstructorDto
         updateInstructorFields(existingInstructor, instructorDto);
+
+        // Upload new profile picture if file is provided
+        if (file != null && !file.isEmpty()) {
+            try {
+                String imageUrl = firebaseStorageService.uploadFile(file);
+                existingInstructor.setPhotoUrl(imageUrl);
+            } catch (IOException e) {
+                throw new IllegalStateException("Can't upload profile picture");
+            }
+        }
 
         // Save the updated Instructor back to the database
         instructorRepository.save(existingInstructor);

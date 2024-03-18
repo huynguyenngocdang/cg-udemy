@@ -4,11 +4,17 @@ import com.codegym.udemy.dto.CourseDto;
 import com.codegym.udemy.entity.Category;
 import com.codegym.udemy.entity.Chapter;
 import com.codegym.udemy.entity.Course;
+import com.codegym.udemy.entity.Instructor;
+import com.codegym.udemy.entity.Review;
 import com.codegym.udemy.entity.Student;
 import com.codegym.udemy.entity.Voucher;
 import com.codegym.udemy.repository.AppUserRepository;
+import com.codegym.udemy.repository.CategoryRepository;
 import com.codegym.udemy.repository.ChapterRepository;
 import com.codegym.udemy.repository.CourseRepository;
+import com.codegym.udemy.repository.InstructorRepository;
+import com.codegym.udemy.repository.ReviewRepository;
+import com.codegym.udemy.repository.StudentRepository;
 import com.codegym.udemy.repository.VoucherRepository;
 import com.codegym.udemy.service.CourseService;
 import org.modelmapper.ModelMapper;
@@ -18,30 +24,69 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
 public class CourseServiceImpl implements CourseService {
     private final CourseRepository courseRepository;
+    private final CategoryRepository categoryRepository;
     private final ChapterRepository chapterRepository;
     private final VoucherRepository voucherRepository;
-    private final AppUserRepository appUserRepository;
+    private final ReviewRepository reviewRepository;
+    private final StudentRepository studentRepository;
+    private final InstructorRepository instructorRepository;
     private final ModelMapper modelMapper;
-
-    public CourseServiceImpl(CourseRepository courseRepository, ChapterRepository chapterRepository, VoucherRepository voucherRepository, AppUserRepository appUserRepository, ModelMapper modelMapper) {
+    @Autowired
+    public CourseServiceImpl(CourseRepository courseRepository, CategoryRepository categoryRepository,
+                             ChapterRepository chapterRepository, VoucherRepository voucherRepository,
+                             ReviewRepository reviewRepository, InstructorRepository instructorRepository,
+                             StudentRepository studentRepository, ModelMapper modelMapper) {
         this.courseRepository = courseRepository;
+        this.categoryRepository = categoryRepository;
         this.chapterRepository = chapterRepository;
         this.voucherRepository = voucherRepository;
-        this.appUserRepository = appUserRepository;
+        this.reviewRepository = reviewRepository;
+        this.instructorRepository = instructorRepository;
+        this.studentRepository = studentRepository;
         this.modelMapper = modelMapper;
     }
 
     @Override
     public Page<CourseDto> getCoursesByPage(int pageNumber, int pageSize) {
         Page<Course> courses = courseRepository.findAll(PageRequest.of(pageNumber - 1, pageSize));
-        return courses.map(this::mapToCourseDto);
+        return courses.map(this::convertToCourseDto);
     }
-    private CourseDto mapToCourseDto(Course course){
+    private Course convertToCourse(CourseDto courseDto) {
+        Course course = modelMapper.map(courseDto, Course.class);
+
+        if(courseDto.getCategoriesId() != null && !courseDto.getCategoriesId().isEmpty()) {
+            List<Category> categories = categoryRepository.findAllById(courseDto.getCategoriesId());
+            course.setCategories(categories);
+        }
+        if(courseDto.getChaptersId() != null && !courseDto.getChaptersId().isEmpty()) {
+            List<Chapter> chapters = chapterRepository.findAllById(courseDto.getChaptersId());
+            course.setChapters(chapters);
+        }
+        if(courseDto.getInstructorId() != null) {
+            Optional<Instructor> optionalInstructor = instructorRepository.findById(courseDto.getInstructorId());
+            optionalInstructor.ifPresent(course::setInstructor);
+        }
+        if(courseDto.getVouchersId() != null && !courseDto.getVouchersId().isEmpty()) {
+            List<Voucher> vouchers = voucherRepository.findAllById(courseDto.getVouchersId());
+            course.setVouchers(vouchers);
+        }
+        if(courseDto.getStudentsId() != null && !courseDto.getStudentsId().isEmpty()) {
+            List<Student> students = studentRepository.findAllById(courseDto.getStudentsId());
+            course.setStudents(students);
+        }
+        if(courseDto.getReviewsId() != null && !courseDto.getReviewsId().isEmpty()) {
+            List<Review> reviews = reviewRepository.findAllById(courseDto.getReviewsId());
+            course.setReviews(reviews);
+        }
+        return course;
+    }
+    private CourseDto convertToCourseDto(Course course){
         CourseDto courseDto = modelMapper.map(course, CourseDto.class);
 
         if(course.getCategories() != null) {
@@ -60,12 +105,8 @@ public class CourseServiceImpl implements CourseService {
             courseDto.setChaptersId(chaptersId);
         }
 
-        if(course.getStudents() != null) {
-            List<Long> studentsId = course.getStudents()
-                    .stream()
-                    .map(Student::getId)
-                    .collect(Collectors.toList());
-            courseDto.setStudentsId(studentsId);
+        if(course.getInstructor() != null) {
+            courseDto.setInstructorId(course.getInstructor().getId());
         }
 
         if(course.getVouchers() != null) {
@@ -75,6 +116,22 @@ public class CourseServiceImpl implements CourseService {
                     .collect(Collectors.toList());
             courseDto.setVouchersId(vouchersId);
         }
+
+        if(course.getStudents() != null) {
+            List<Long> studentsId = course.getStudents()
+                    .stream()
+                    .map(Student::getId)
+                    .collect(Collectors.toList());
+            courseDto.setStudentsId(studentsId);
+        }
+        if(course.getReviews() != null) {
+            List<Long> reviewsId = course.getReviews()
+                    .stream()
+                    .map(Review::getId)
+                    .collect(Collectors.toList());
+            courseDto.setReviewsId(reviewsId);
+        }
+
         return courseDto;
     }
 }

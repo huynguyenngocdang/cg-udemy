@@ -35,5 +35,6 @@ public class CourseDto {
     private List<Long> chaptersId = new ArrayList<>();
     private List<Long> vouchersId = new ArrayList<>();
     private List<Long> studentsId = new ArrayList<>();
+    private List<Long> reviewsId = new ArrayList<>();
     private Long instructorId;
 }

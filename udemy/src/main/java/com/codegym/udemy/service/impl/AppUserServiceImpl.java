@@ -53,27 +53,27 @@ public class AppUserServiceImpl implements AppUserService {
         return appUserDto;
     }
 
-//    @Override
-//    public void saveUser(AppUserDto appUserDto) {
-//        AppUser appUser = new AppUser();
-//        appUser.setUsername(appUserDto.getUsername());
-//        appUser.setPassword(passwordEncoder.encode(appUserDto.getPassword()));
-//        appUser.setEmail(appUserDto.getEmail());
-//
-//        Role role = roleRepository.findByRoleType(VarConstant.ROLE_TYPE_USER);
-//        appUser.setRoles(Arrays.asList(role));
-//        appUser.setActive(true);
-//        appUserRepository.save(appUser);
-//    }
-
     @Override
     public void saveUser(AppUserDto appUserDto) {
-        AppUser appUser = convertToAppUser(appUserDto);
+        AppUser appUser = new AppUser();
+        appUser.setUsername(appUserDto.getUsername());
+        appUser.setPassword(passwordEncoder.encode(appUserDto.getPassword()));
+        appUser.setEmail(appUserDto.getEmail());
+
         Role role = roleRepository.findByRoleType(VarConstant.ROLE_TYPE_USER);
         appUser.setRoles(Arrays.asList(role));
         appUser.setActive(true);
         appUserRepository.save(appUser);
     }
+
+//    @Override
+//    public void saveUser(AppUserDto appUserDto) {
+//        AppUser appUser = convertToAppUser(appUserDto);
+//        Role role = roleRepository.findByRoleType(VarConstant.ROLE_TYPE_USER);
+//        appUser.setRoles(Arrays.asList(role));
+//        appUser.setActive(true);
+//        appUserRepository.save(appUser);
+//    }
 
     @Override
     public AppUser findByUsername(String username) {
