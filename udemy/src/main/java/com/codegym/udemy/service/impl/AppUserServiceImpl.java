@@ -53,8 +53,9 @@ public class AppUserServiceImpl implements AppUserService {
         return appUserDto;
     }
 
+
     @Override
-    public void saveUser(AppUserDto appUserDto) {
+    public boolean saveUser(AppUserDto appUserDto) {
         AppUser appUser = new AppUser();
         appUser.setUsername(appUserDto.getUsername());
         appUser.setPassword(passwordEncoder.encode(appUserDto.getPassword()));
@@ -63,17 +64,9 @@ public class AppUserServiceImpl implements AppUserService {
         Role role = roleRepository.findByRoleType(VarConstant.ROLE_TYPE_USER);
         appUser.setRoles(Arrays.asList(role));
         appUser.setActive(true);
-        appUserRepository.save(appUser);
+        AppUser savedUser = appUserRepository.save(appUser);
+        return savedUser != null;
     }
-
-//    @Override
-//    public void saveUser(AppUserDto appUserDto) {
-//        AppUser appUser = convertToAppUser(appUserDto);
-//        Role role = roleRepository.findByRoleType(VarConstant.ROLE_TYPE_USER);
-//        appUser.setRoles(Arrays.asList(role));
-//        appUser.setActive(true);
-//        appUserRepository.save(appUser);
-//    }
 
     @Override
     public AppUser findByUsername(String username) {
@@ -92,22 +85,24 @@ public class AppUserServiceImpl implements AppUserService {
     }
 
     @Override
-    public void editUser(Long userId, AppUserDto appUserDto) {
+    public boolean editUser(Long userId, AppUserDto appUserDto) {
         AppUser existingAppUser = appUserRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("AppUser not found with userId: " + userId));
 
         AppUser updatedUser = convertToAppUser(appUserDto);
         updatedUser.setId(existingAppUser.getId());
-        appUserRepository.save(updatedUser);
+        AppUser savedUser = appUserRepository.save(updatedUser);
+        return savedUser != null;
     }
 
     @Override
-    public void deleteUser(Long userId) {
+    public boolean deleteUser(Long userId) {
         Optional<AppUser> optionalAppUser = appUserRepository.findById(userId);
         if (optionalAppUser.isPresent()) {
             appUserRepository.deleteById(userId);
+            return true;
         } else {
-            throw new IllegalArgumentException("AppUser not found with userId: " + userId);
+            return false;
         }
     }
 }
