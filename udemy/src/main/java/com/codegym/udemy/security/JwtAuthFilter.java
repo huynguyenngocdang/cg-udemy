@@ -1,5 +1,6 @@
 package com.codegym.udemy.security;
 
+import com.codegym.udemy.service.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,8 +18,12 @@ import java.io.IOException;
 @Component
 public class JwtAuthFilter extends OncePerRequestFilter {
 
-    @Autowired
+
     private JwtService jwtService;
+    @Autowired
+    public JwtAuthFilter(JwtService jwtService) {
+        this.jwtService = jwtService;
+    }
 
     @Autowired
     UserDetailsServiceImpl userDetailsServiceImpl;

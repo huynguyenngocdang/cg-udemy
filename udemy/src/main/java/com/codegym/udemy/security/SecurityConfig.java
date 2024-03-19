@@ -34,17 +34,17 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http.csrf().disable()
                 .authorizeHttpRequests()
-                .requestMatchers("/api/v1/login", "/api/v1/register", "/api/v1/**").permitAll()
-                .and().build();
-//                .and()
-//                .authorizeHttpRequests().requestMatchers("/api/v1/**")
-//                .authenticated()
-//                .and()
-//                .sessionManagement()
-//                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-//                .and()
-//                .authenticationProvider(authenticationProvider())
-//                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class).build();
+                .requestMatchers("/api/v1/login", "/api/v1/register").permitAll()
+//                .and().build();
+                .and()
+                .authorizeHttpRequests().requestMatchers("/api/v1/**")
+                .authenticated()
+                .and()
+                .sessionManagement()
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .and()
+                .authenticationProvider(authenticationProvider())
+                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class).build();
     }
 
     @Bean

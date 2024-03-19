@@ -49,7 +49,7 @@ public class FirebaseStorageServiceImpl implements FirebaseStorageService {
         String filename = generateUniqueFileName(file.getOriginalFilename());
         Blob blob = bucket.create(filename, file.getBytes(), file.getContentType());
 
-        String url = firebaseProperties.getUrl() + "o/" + blob.getName() + "?alt=media";
+        String url = firebaseProperties.getImageUrl() + "o/" + blob.getName() + "?alt=media";
         return url;
     }
 

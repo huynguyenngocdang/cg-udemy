@@ -57,6 +57,7 @@ public class CourseServiceImpl implements CourseService {
         Page<Course> courses = courseRepository.findAll(PageRequest.of(pageNumber - 1, pageSize));
         return courses.map(this::convertToCourseDto);
     }
+
     private Course convertToCourse(CourseDto courseDto) {
         Course course = modelMapper.map(courseDto, Course.class);
 

@@ -9,5 +9,5 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "firebase")
 public class FirebaseProperties {
     public String bucketName;
-    public String url;
+    public String imageUrl;
 }

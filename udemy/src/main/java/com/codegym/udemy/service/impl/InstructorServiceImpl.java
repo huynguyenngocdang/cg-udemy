@@ -77,6 +77,7 @@ public class InstructorServiceImpl implements InstructorService {
             // If no existing Instructor is found, proceed to save the new Instructor
             try {
                 String imageUrl = firebaseStorageService.uploadFile(file);
+                instructorDto.setAppUserId(appUserId);
                 instructorDto.setPhotoUrl(imageUrl);
             } catch (IOException e) {
                 throw new IllegalStateException("Can't upload profile picture");
@@ -93,25 +94,26 @@ public class InstructorServiceImpl implements InstructorService {
                 .orElseThrow(() -> new IllegalArgumentException("Instructor not found with ID: " + instructorId));
 
         // Update fields of the existing Instructor with data from InstructorDto
-        updateInstructorFields(existingInstructor, instructorDto);
+       Instructor updateInstructor = updateInstructorFields(instructorId, instructorDto);
 
         // Upload new profile picture if file is provided
         if (file != null && !file.isEmpty()) {
             try {
                 String imageUrl = firebaseStorageService.uploadFile(file);
-                existingInstructor.setPhotoUrl(imageUrl);
+                updateInstructor.setPhotoUrl(imageUrl);
             } catch (IOException e) {
                 throw new IllegalStateException("Can't upload profile picture");
             }
         }
 
         // Save the updated Instructor back to the database
-        instructorRepository.save(existingInstructor);
+        instructorRepository.save(updateInstructor);
     }
 
-    private void updateInstructorFields(Instructor instructor, InstructorDto instructorDto) {
+    private Instructor updateInstructorFields(Long instructorId, InstructorDto instructorDto) {
         // Update common fields using ModelMapper
-        modelMapper.map(instructorDto, instructor);
+       Instructor instructor = modelMapper.map(instructorDto, Instructor.class);
+       instructor.setId(instructorId);
 
         // Update AppUser if AppUserId is provided
         if (instructorDto.getAppUserId() != null) {
@@ -125,6 +127,8 @@ public class InstructorServiceImpl implements InstructorService {
             List<Course> courses = courseRepository.findAllById(instructorDto.getCoursesId());
             instructor.setCourses(courses);
         }
+
+        return instructor;
     }
 
     @Override

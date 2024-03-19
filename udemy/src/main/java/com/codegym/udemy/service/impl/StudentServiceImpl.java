@@ -9,10 +9,13 @@ import com.codegym.udemy.repository.AppUserRepository;
 import com.codegym.udemy.repository.CourseRepository;
 import com.codegym.udemy.repository.ReviewRepository;
 import com.codegym.udemy.repository.StudentRepository;
+import com.codegym.udemy.service.FirebaseStorageService;
 import com.codegym.udemy.service.StudentService;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -24,13 +27,17 @@ public class StudentServiceImpl implements StudentService {
     private final AppUserRepository appUserRepository;
     private final CourseRepository courseRepository;
     private final ModelMapper modelMapper;
+    private final FirebaseStorageService firebaseStorageService;
 
-    public StudentServiceImpl(StudentRepository studentRepository, ReviewRepository reviewRepository, AppUserRepository appUserRepository, CourseRepository courseRepository, ModelMapper modelMapper) {
+    public StudentServiceImpl(StudentRepository studentRepository, ReviewRepository reviewRepository,
+                              AppUserRepository appUserRepository, CourseRepository courseRepository,
+                              ModelMapper modelMapper, FirebaseStorageService firebaseStorageService) {
         this.studentRepository = studentRepository;
         this.reviewRepository = reviewRepository;
         this.appUserRepository = appUserRepository;
         this.courseRepository = courseRepository;
         this.modelMapper = modelMapper;
+        this.firebaseStorageService = firebaseStorageService;
     }
 
     private StudentDto convertToStudentDto(Student student) {
@@ -77,14 +84,24 @@ public class StudentServiceImpl implements StudentService {
     }
 
     @Override
-    public void saveStudent(Long userId, StudentDto studentDto) {
+    public boolean createStudent(Long userId, StudentDto studentDto, MultipartFile photo) {
         Optional<Student> existingStudent = studentRepository.getStudentsByAppUser_Id(userId);
 
         if(existingStudent.isPresent()) {
             throw new IllegalArgumentException("A student is already exist with provided app user Id");
         } else {
+
+            try {
+                String photoUrl = firebaseStorageService.uploadFile(photo);
+                studentDto.setPhotoUrl(photoUrl);
+            } catch (IOException e) {
+                System.out.println(e.getMessage());
+                return false;
+            }
+            studentDto.setAppUserId(userId);
             Student student = convertToStudent(studentDto);
             studentRepository.save(student);
+            return student.getId() != null;
         }
     }
 
@@ -100,10 +117,21 @@ public class StudentServiceImpl implements StudentService {
     }
 
     @Override
-    public void editStudent(Long studentId, StudentDto studentDto) {
+    public boolean editStudent(Long studentId, StudentDto studentDto, MultipartFile photo) {
         Student existingStudent = studentRepository.findById(studentId).orElseThrow(() -> new IllegalArgumentException("Student not found with Id:" + studentId));
         updateStudentField(existingStudent, studentDto);
+
+        // Upload new profile picture if file is provided
+        if (photo != null && !photo.isEmpty()) {
+            try {
+                String imageUrl = firebaseStorageService.uploadFile(photo);
+                existingStudent.setPhotoUrl(imageUrl);
+            } catch (IOException e) {
+                throw new IllegalStateException("Can't upload profile picture");
+            }
+        }
         studentRepository.save(existingStudent);
+        return true;
     }
 
     private void updateStudentField(Student existingStudent, StudentDto studentDto) {
@@ -127,10 +155,11 @@ public class StudentServiceImpl implements StudentService {
         }
     }
     @Override
-    public void deleteStudentByUserId(Long userId) {
+    public boolean deleteStudentByUserId(Long userId) {
         Optional<Student> optionalStudent = studentRepository.getStudentsByAppUser_Id(userId);
         if(optionalStudent.isPresent()){
             studentRepository.delete(optionalStudent.get());
+            return true;
         } else {
             throw new IllegalArgumentException("Student not found with userId" + userId);
         }
