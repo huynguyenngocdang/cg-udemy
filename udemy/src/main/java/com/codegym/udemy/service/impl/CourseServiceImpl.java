@@ -135,4 +135,55 @@ public class CourseServiceImpl implements CourseService {
 
         return courseDto;
     }
+
+    @Override
+    public boolean createCourse(Long userId, CourseDto courseDto) {
+        Instructor instructor = instructorRepository.getInstructorByAppUser_Id(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Can't find instructor with userId:" + userId));
+
+        courseDto.setInstructorId(instructor.getId());
+        Course course = convertToCourse(courseDto);
+        courseRepository.save(course);
+        return true;
+    }
+    @Override
+    public CourseDto getCourseById(Long courseId) {
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new IllegalArgumentException("Can't find course with courseId: " + courseId));
+        return convertToCourseDto(course);
+    }
+    @Override
+    public boolean editCourse(Long userId, Long courseId, CourseDto courseDto) {
+        Instructor instructor = instructorRepository.getInstructorByAppUser_Id(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Can't find instructor with userId: " + userId));
+
+        boolean isCourseOwn = checkCourseBelongInstructor(instructor, courseId);
+        if (isCourseOwn) {
+            Course updateCourse = modelMapper.map(courseDto, Course.class);
+            updateCourse.setId(courseId);
+            courseRepository.save(updateCourse);
+            return  true;
+        } else {
+            throw new IllegalArgumentException("User does not own this course to make change");
+        }
+    }
+
+    private boolean checkCourseBelongInstructor(Instructor instructor, Long courseId) {
+        Course course = courseRepository.findById(courseId)
+                .orElseThrow(() -> new IllegalArgumentException("Can't find course with courseId: " + courseId));
+        return course.getInstructor().getId().equals(instructor.getId());
+    }
+    @Override
+    public boolean deleteCourse(Long userId, Long courseId) {
+        Instructor instructor = instructorRepository.getInstructorByAppUser_Id(userId)
+                .orElseThrow(() -> new IllegalArgumentException("Can't find instructor with userId: " + userId));
+
+        boolean isCourseOwn = checkCourseBelongInstructor(instructor, courseId);
+        if(isCourseOwn) {
+            courseRepository.deleteById(courseId);
+            return true;
+        } else {
+            throw new IllegalArgumentException("User does not own this course to make change");
+        }
+    }
 }
