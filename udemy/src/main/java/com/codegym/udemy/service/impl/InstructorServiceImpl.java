@@ -67,7 +67,7 @@ public class InstructorServiceImpl implements InstructorService {
     }
 
     @Override
-    public void saveInstructor(Long appUserId, InstructorDto instructorDto, MultipartFile file) {
+    public boolean createInstructor(Long appUserId, InstructorDto instructorDto, MultipartFile file) {
         // Check if there is already an Instructor associated with the provided AppUser
         Optional<Instructor> existingInstructor = instructorRepository.getInstructorByAppUser_Id(appUserId);
 
@@ -84,11 +84,12 @@ public class InstructorServiceImpl implements InstructorService {
             }
             Instructor instructor = convertToInstructor(instructorDto);
             instructorRepository.save(instructor);
+            return true;
         }
     }
 
     @Override
-    public void editInstructor(Long instructorId, InstructorDto instructorDto, MultipartFile file) {
+    public boolean editInstructor(Long instructorId, InstructorDto instructorDto, MultipartFile file) {
         // Fetch the existing Instructor from the database
         Instructor existingInstructor = instructorRepository.findById(instructorId)
                 .orElseThrow(() -> new IllegalArgumentException("Instructor not found with ID: " + instructorId));
@@ -108,6 +109,7 @@ public class InstructorServiceImpl implements InstructorService {
 
         // Save the updated Instructor back to the database
         instructorRepository.save(updateInstructor);
+        return true;
     }
 
     private Instructor updateInstructorFields(Long instructorId, InstructorDto instructorDto) {
@@ -143,7 +145,7 @@ public class InstructorServiceImpl implements InstructorService {
     }
 
     @Override
-    public void deleteInstructorByUserId(Long userId) {
+    public boolean deleteInstructorByUserId(Long userId) {
         // Fetch the Instructor based on the userId
         Optional<Instructor> optionalInstructor = instructorRepository.getInstructorByAppUser_Id(userId);
 
@@ -151,6 +153,7 @@ public class InstructorServiceImpl implements InstructorService {
         if (optionalInstructor.isPresent()) {
             // Delete the Instructor
             instructorRepository.delete(optionalInstructor.get());
+            return true;
         } else {
             // Handle the case where the Instructor does not exist
             throw new IllegalArgumentException("Instructor not found with userId: " + userId);

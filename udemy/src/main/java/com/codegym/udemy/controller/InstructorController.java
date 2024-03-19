@@ -2,22 +2,17 @@ package com.codegym.udemy.controller;
 
 import com.codegym.udemy.dto.InstructorDto;
 import com.codegym.udemy.entity.AppUser;
-import com.codegym.udemy.entity.Instructor;
 import com.codegym.udemy.repository.AppUserRepository;
 import com.codegym.udemy.service.JwtService;
-import com.codegym.udemy.service.impl.JwtServiceImpl;
 import com.codegym.udemy.service.InstructorService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -54,14 +49,14 @@ public class InstructorController {
 
     @PostMapping(value = "/create",consumes = ("multipart/form-data")
     )
-    public ResponseEntity<String> saveInstructor(
+    public ResponseEntity<?> createInstructor(
             @RequestHeader(AUTHORIZATION) String token,
             @ModelAttribute InstructorDto instructorDto,
             @RequestParam("file") MultipartFile file
             ) {
         Long userId = jwtService.extractUserId(token);
-        instructorService.saveInstructor(userId, instructorDto, file);
-        return ResponseEntity.ok("Instructor saved successfully.");
+       boolean created = instructorService.createInstructor(userId, instructorDto, file);
+        return  ResponseEntity.status(created ? HttpStatus.CREATED : HttpStatus.INTERNAL_SERVER_ERROR).build();
     }
 
     @PutMapping(value = "/edit", consumes = ("multipart/form-data"))
@@ -70,14 +65,14 @@ public class InstructorController {
                                                  @RequestParam("file") MultipartFile file) {
         Long userId = jwtService.extractUserId(token);
         InstructorDto existingInstructorDto = instructorService.getInstructorByUserId(userId);
-        instructorService.editInstructor(existingInstructorDto.getId(), instructorDto, file);
-        return ResponseEntity.ok("Instructor edited successfully.");
+        boolean edited =  instructorService.editInstructor(existingInstructorDto.getId(), instructorDto, file);
+        return ResponseEntity.status(edited ? HttpStatus.OK : HttpStatus.INTERNAL_SERVER_ERROR).build();
     }
 
     @DeleteMapping("/delete")
-    public ResponseEntity<String> deleteInstructorByUserId(@RequestHeader(AUTHORIZATION) String token) {
+    public ResponseEntity<?> deleteInstructorByUserId(@RequestHeader(AUTHORIZATION) String token) {
         Long userId = jwtService.extractUserId(token);
-        instructorService.deleteInstructorByUserId(userId);
-        return ResponseEntity.ok("Instructor deleted successfully.");
+        boolean deleted = instructorService.deleteInstructorByUserId(userId);
+        return ResponseEntity.status(deleted ? HttpStatus.NO_CONTENT : HttpStatus.NOT_FOUND).build();
     }
 }
